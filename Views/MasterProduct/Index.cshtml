@@ -6,6 +6,12 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css">
 <script type="text/javascript" charset="utf8"
     src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<style>
+    /* Align text in the price column to the right */
+    .text-right {
+        text-align: right;
+    }
+</style>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -23,7 +29,7 @@
                                 <th>Product Code</th>
                                 <th>Product Name</th>
                                 <th>Price</th>
-                                <th>Actions</th> <!-- New column for action buttons -->
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -32,9 +38,7 @@
                     </table>
                 </div>
             </div>
-
         </div>
-
     </div>
 </div>
 
@@ -91,7 +95,8 @@
                     "data": "price",
                     "render": function (data) {
                         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data);
-                    }
+                    },
+                    "className": "text-right"
                 },
                 {
                     "data": null,

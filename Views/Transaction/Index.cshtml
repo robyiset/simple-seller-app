@@ -2,3 +2,303 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Index";
 }
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css">
+<script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<style>
+    /* Align text in the price column to the right */
+    .text-right {
+        text-align: right;
+    }
+</style>
+<div class="container-fluid mb-3">
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Product List</h5>
+                </div>
+                <div class="card-body">
+                    <table id="productTable" class="display">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Product Code</th>
+                                <th>Product Name</th>
+                                <th>Price</th>
+                                <th>Amounts</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated dynamically here -->
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Cart List</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <table id="cartTable" class="display">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Product Code</th>
+                                        <th>Product Name</th>
+                                        <th>Price</th>
+                                        <th>Amounts</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be populated dynamically here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="text-right font-weight-bold me-3">
+                                Total: <span id="cartTotal">IDR 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <button id="orderButton" class="btn btn-success" style="display:none;"
+                        onclick="placeOrder()">Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var cartTable;
+    $(document).ready(function () {
+        var productTable = $('#productTable').DataTable({
+            "ajax": {
+                "url": "MasterProduct/getData",
+                "dataSrc": ""
+            },
+            "columns": [
+                { "data": "id" },
+                { "data": "product_code" },
+                { "data": "product_name" },
+                {
+                    "data": "price",
+                    "render": function (data) {
+                        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data);
+                    },
+                    "className": "text-right"
+                },
+                {
+                    "data": null,
+                    "render": function (data, type, row) {
+                        return `
+                        <div class="input-group">
+                            <span class="input-group-text" style="cursor:pointer" onclick="changeAmount('${row.id}', -1)">-</span>
+                            <input type="text" class="form-control amount" id="amount_${row.id}" value="0" readonly>
+                            <span class="input-group-text" style="cursor:pointer" onclick="changeAmount('${row.id}', 1)">+</span>
+                        </div>
+                    `;
+                    },
+                    "orderable": false,
+                    "searchable": false
+                },
+                {
+                    "data": null,
+                    "render": function (data, type, row) {
+                        return `
+                    <button class="btn btn-primary btn-sm select-btn" 
+                            data-id="${row.id}" 
+                            data-product_code="${row.product_code}" 
+                            data-product_name="${row.product_name}" 
+                            data-price="${row.price}">Select</button>
+                `;
+                    },
+                    "orderable": false,
+                    "searchable": false
+                }
+            ],
+            "columnDefs": [
+                {
+                    "targets": 0,
+                    "visible": false
+                },
+                {
+                    "targets": 4,
+                    "width": "110px"
+                }
+            ]
+        });
+
+        cartTable = $('#cartTable').DataTable({
+            "paging": false,
+            "searching": false,
+            "info": false,
+            "columns": [
+                { "data": "id" },
+                { "data": "product_code" },
+                { "data": "product_name" },
+                {
+                    "data": "price",
+                    "render": function (data) {
+                        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data);
+                    },
+                    "className": "text-right"
+                },
+                {
+                    "data": "amount",
+                    "render": function (data) {
+                        return data;
+                    },
+                    "className": "text-right"
+                },
+                {
+                    "data": null,
+                    "render": function (data, type, row) {
+                        var total = row.price * row.amount;
+                        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(total);
+                    },
+                    "className": "text-right"
+                }
+            ],
+            "columnDefs": [
+                {
+                    "targets": 0,
+                    "visible": false
+                },
+                {
+                    "targets": 4,
+                    "width": "110px"
+                }
+            ],
+            "order": []
+        });
+
+        $('#productTable').on('click', '.select-btn', function () {
+            var productId = $(this).data('id');
+            var productCode = $(this).data('product_code');
+            var productName = $(this).data('product_name');
+            var productPrice = $(this).data('price');
+            var amount = parseInt($('#amount_' + productId).val()) || 0;
+
+            if (amount > 0) {
+                var productExists = false;
+
+                cartTable.rows().every(function () {
+                    var rowData = this.data();
+                    if (rowData.id === productId) {
+                        productExists = true;
+                        rowData.amount += amount;
+                        this.invalidate();
+                        cartTable.row(this).data(rowData).draw();
+                    }
+                });
+
+                if (!productExists) {
+                    cartTable.row.add({
+                        "id": productId,
+                        "product_code": productCode,
+                        "product_name": productName,
+                        "price": productPrice,
+                        "amount": amount
+                    }).draw();
+                }
+
+                $('#amount_' + productId).val("0");
+
+                showToast("Added to cart", 'success');
+                updateCartTotal();
+            } else {
+                showToast("Amount cannot be zero", 'danger');
+            }
+        });
+
+        cartTable.on('draw', function () {
+            updateCartTotal();
+            checkCartStatus();
+        });
+    });
+
+    function checkCartStatus() {
+        var rowCount = cartTable.rows().count();
+        if (rowCount === 0) {
+            $('#orderButton').hide();
+        } else {
+            $('#orderButton').show();
+        }
+    }
+
+    function changeAmount(productId, change) {
+        var amountInput = $('#amount_' + productId);
+        var currentAmount = parseInt(amountInput.val()) || 0;
+
+        currentAmount += change;
+
+        if (currentAmount < 0) {
+            currentAmount = 0;
+        }
+
+        amountInput.val(currentAmount);
+    }
+    function updateCartTotal() {
+        var total = 0;
+
+        cartTable.rows().every(function () {
+            var rowData = this.data();
+            total += rowData.price * rowData.amount;
+        });
+
+        $('#cartTotal').text(new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(total));
+    }
+
+    function placeOrder() {
+        var orderData = [];
+
+        cartTable.rows().every(function () {
+            var rowData = this.data();
+
+            orderData.push({
+                product_code: rowData.product_code,
+                quantity: rowData.amount
+            });
+        });
+
+        if (orderData.length === 0) {
+            showToast("Cart is empty. Cannot place order.", 'danger');
+            return;
+        }
+
+        $.ajax({
+            url: '/Transaction/addTransaction',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(orderData),
+            success: function (response) {
+                if (response.status) {
+                    showToast(response.message, 'success');
+                    cartTable.clear().draw();
+                    updateCartTotal();
+                    $('#orderButton').hide();
+                } else {
+                    showToast(response.message, 'danger');
+                }
+            },
+            error: function (xhr, status, error) {
+                showToast("An error occurred while processing your order.", 'danger');
+            }
+        });
+    }
+</script>
