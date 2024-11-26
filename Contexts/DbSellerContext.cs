@@ -24,7 +24,6 @@ namespace simple_seller_app.Contexts
         public DbSet<m_product> m_product { get; set; }
         public DbSet<t_transaction> t_transaction { get; set; }
         public DbSet<u_user> u_user { get; set; }
-        public DbSet<u_user> m_menu { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -35,6 +35,27 @@ namespace simple_seller_app.Controllers
             return View();
         }
 
+        [HttpPost]
+        public JsonResult LoginUser([FromBody] login req)
+        {
+            try
+            {
+                var user = db.u_user.Where(f => f.username == req.username.ToLower()).FirstOrDefault();
+                if (user != null)
+                {
+                    if (BCrypt.Net.BCrypt.Verify(req.password, user.password))
+                    {
+                        return Json(new { status = true, message = "Welcome, " + req.username.ToLower() });
+                    }
+                }
+                return Json(new { status = true, message = "Incorrect username or password" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { status = false, message = ex.Message });
+            }
+        }
+
         [HttpGet]
         public JsonResult checkUsername(string? username)
         {
@@ -55,21 +76,25 @@ namespace simple_seller_app.Controllers
             }
         }
 
-        [HttpGet]
-        public JsonResult Register(register req)
+        [HttpPost]
+        public JsonResult CreateNewUser([FromBody] register req)
         {
             try
             {
-                if (db.u_user.Where(f => f.username == req.username).FirstOrDefault() != null)
+                if (db.u_user.Where(f => f.username == req.username.ToLower()).FirstOrDefault() != null)
                 {
                     return Json(new { status = false, message = "Username is already used" });
                 }
                 else
                 {
+                    string role = db.u_user.Count() == 0 ? "ADMIN" : "KASIR";
                     db.u_user.Add(new u_user
                     {
-                        username = req.username,
+                        id = Guid.NewGuid().ToString(),
+                        full_name = req.full_name,
+                        username = req.username.ToLower(),
                         password = BCrypt.Net.BCrypt.HashPassword(req.password),
+                        role = role,
                         register_date = DateTime.UtcNow,
                     });
                     db.SaveChanges();

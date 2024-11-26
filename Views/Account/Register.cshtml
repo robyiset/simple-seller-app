@@ -10,6 +10,7 @@
             <div class="mb-3">
                 <label class="form-label">Full name</label>
                 <input type="text" class="form-control" id="txt_full_name">
+                <small id="fullnameFeedback" class="form-text"></small>
             </div>
             <div class="mb-3">
                 <label class="form-label">Username</label>
@@ -19,12 +20,14 @@
             <div class="mb-3">
                 <label class="form-label">Password</label>
                 <input type="password" class="form-control" id="txt_password">
+                <small id="passwordFeedback" class="form-text"></small>
             </div>
             <div class="mb-3">
                 <label class="form-label">Confirm Password</label>
                 <input type="password" class="form-control" id="txt_confirm_password">
+                <small id="confirmPasswordFeedback" class="form-text"></small>
             </div>
-            <button type="button" class="btn btn-primary w-100 mb-3 mt-3">Register</button>
+            <button type="button" id="btn_register" class="btn btn-primary w-100 mb-3 mt-3">Register</button>
             <div class="text-center">
                 <p>Have an account? <a href="@Url.Action("Login", "Account")" class="text-decoration-none">
                         Login here</a></p>
@@ -33,17 +36,30 @@
     </div>
 </div>
 
+<div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
 <script>
+    var validation = {
+        username: false,
+        password: false,
+        confirm_password: false,
+        full_name: false
+    };
     $(document).ready(function () {
         $('#txt_username').on('input', function () {
             const username = $(this).val();
+            validation.username = false;
 
-            // Minimum 4 characters check
+            $('#usernameFeedback')
+                .text('')
+                .removeClass('text-success')
+                .removeClass('text-danger');
+
             if (username.length < 4) {
-                $('#usernameFeedback')
+    @* $('#usernameFeedback')
                     .text('Username must be at least 4 characters long.')
                     .removeClass('text-success')
-                    .addClass('text-danger');
+                    .addClass('text-danger'); *@
                 return;
             }
 
@@ -54,6 +70,7 @@
                 data: { username: username },
                 success: function (response) {
                     if (response.status) {
+                        validation.username = true;
                         $('#usernameFeedback')
                             .text(response.message)
                             .removeClass('text-danger')
@@ -73,5 +90,113 @@
                 }
             });
         });
+
+        $('#txt_password').on('input', function () {
+            const password = $(this).val();
+
+            if (password.length < 6) {
+                validation.password = false;
+                $('#passwordFeedback')
+                    .text('Password must be at least 6 characters long.')
+                    .removeClass('text-success')
+                    .addClass('text-danger');
+            } else {
+                validation.password = true;
+                $('#passwordFeedback')
+                    .text('Password is valid.')
+                    .removeClass('text-danger')
+                    .addClass('text-success');
+            }
+        });
+
+        $('#txt_confirm_password').on('input', function () {
+            const password = $('#txt_password').val();
+            const confirmPassword = $(this).val();
+
+            if (password !== confirmPassword) {
+                validation.confirm_password = false;
+                $('#confirmPasswordFeedback')
+                    .text('Passwords do not match.')
+                    .removeClass('text-success')
+                    .addClass('text-danger');
+            } else {
+                validation.confirm_password = true;
+                $('#confirmPasswordFeedback')
+                    .text('Passwords match.')
+                    .removeClass('text-danger')
+                    .addClass('text-success');
+            }
+        });
+
+        $('#txt_full_name').on('input', function () {
+            const fullName = $(this).val().trim();
+            if (fullName === "") {
+                validation.full_name = false;
+                $('#fullNameFeedback')
+                    .text('Full name is required.')
+                    .removeClass('text-success')
+                    .addClass('text-danger');
+            } else {
+                validation.full_name = true;
+                $('#fullNameFeedback')
+                    .text('')
+                    .removeClass('text-danger')
+                    .removeClass('text-success');
+            }
+        });
+
+        $('#btn_register').on('click', function () {
+            if (Object.values(validation).every(status => status === true)) {
+                const data = {
+                    full_name: $('#txt_full_name').val(),
+                    username: $('#txt_username').val(),
+                    password: $('#txt_password').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("CreateNewUser", "Account")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (response) {
+                        if (response.status) {
+                            showToast(response.message, 'success');
+                            setTimeout(() => {
+                                window.location.href = '@Url.Action("Login", "Account")'; // Redirect to login
+                            }, 2000);
+                        } else {
+                            showToast(response.message, 'danger');
+                        }
+                    },
+                    error: function (xhr) {
+                        showToast(xhr.responseText || 'An error occurred during registration.', 'danger');
+                    }
+                });
+            } else {
+                showToast('Please complete the form correctly.', 'danger');
+            }
+        });
     });
+    function showToast(message, type) {
+        const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        const toast = $(`
+                <div class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `);
+
+        $('#toastContainer').append(toast);
+        const bootstrapToast = new bootstrap.Toast(toast[0]);
+        bootstrapToast.show();
+
+        toast.on('hidden.bs.toast', function () {
+            $(this).remove();
+        });
+    }
+
 </script>

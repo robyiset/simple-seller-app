@@ -8,14 +8,13 @@
             <h5 class="card-title text-center mb-4">Login</h5>
             <div class="mb-3">
                 <label class="form-label">Username</label>
-                <input type="text" class="form-control" id="txt_username" aria-describedby="emailHelp">
-                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                <input type="text" class="form-control" id="txt_username">
             </div>
             <div class="mb-3">
                 <label class="form-label">Password</label>
                 <input type="password" class="form-control" id="txt_password">
             </div>
-            <button type="submit" class="btn btn-primary w-100 mb-3 mt-3">Login</button>
+            <button type="button" id="btn_login" class="btn btn-primary w-100 mb-3 mt-3">Login</button>
             <div class="text-center">
                 <p>Don't have an account? <a href="@Url.Action("Register", "Account")" class="text-decoration-none">
                         Register here</a></p>
@@ -23,3 +22,67 @@
         </div>
     </div>
 </div>
+
+<div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+<script>
+    $(document).ready(function () {
+
+        $('#btn_login').on('click', function () {
+            const username = $('#txt_username').val();
+            const password = $('#txt_password').val();
+
+            if (username.trim() === "" || password.trim() === "") {
+                showToast('Username and Password are required.', 'danger');
+                return;
+            }
+
+            const data = {
+                username: username,
+                password: password
+            };
+
+            $.ajax({
+                url: '/Account/LoginUser',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (response.status) {
+                        showToast(response.message, 'success');
+                        setTimeout(function () {
+                            window.location.href = '@Url.Action("Index", "Home")';
+                        }, 2000);
+                    } else {
+                        showToast(response.message, 'danger');
+                    }
+                },
+                error: function (xhr) {
+                    showToast(xhr.responseText || 'An error occurred while logging in.', 'danger');
+                }
+            });
+        });
+    });
+    function showToast(message, type) {
+        const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        const toast = $(`
+                <div class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `);
+
+        $('#toastContainer').append(toast);
+        const bootstrapToast = new bootstrap.Toast(toast[0]);
+        bootstrapToast.show();
+
+        // Automatically remove toast after hiding
+        toast.on('hidden.bs.toast', function () {
+            $(this).remove();
+        });
+    }
+</script>
