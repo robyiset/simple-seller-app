@@ -5,17 +5,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using simple_seller_app.Contexts;
+using simple_seller_app.Contexts.Tables;
+using simple_seller_app.Models;
 
 namespace simple_seller_app.Controllers
 {
-    [Route("[controller]")]
     public class AccountController : Controller
     {
-        private readonly ILogger<AccountController> _logger;
+        private DbSellerContext db;
 
-        public AccountController(ILogger<AccountController> logger)
+        public AccountController(DbSellerContext _db)
         {
-            _logger = logger;
+            db = _db;
         }
 
         public IActionResult Index()
@@ -33,10 +35,52 @@ namespace simple_seller_app.Controllers
             return View();
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        [HttpGet]
+        public JsonResult checkUsername(string? username)
         {
-            return View("Error!");
+            try
+            {
+                if (db.u_user.Where(f => f.username == username).FirstOrDefault() != null)
+                {
+                    return Json(new { status = false, message = "Username is already used" });
+                }
+                else
+                {
+                    return Json(new { status = true, message = "Username is available" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { status = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public JsonResult Register(register req)
+        {
+            try
+            {
+                if (db.u_user.Where(f => f.username == req.username).FirstOrDefault() != null)
+                {
+                    return Json(new { status = false, message = "Username is already used" });
+                }
+                else
+                {
+                    db.u_user.Add(new u_user
+                    {
+                        username = req.username,
+                        password = BCrypt.Net.BCrypt.HashPassword(req.password),
+                        register_date = DateTime.UtcNow,
+                    });
+                    db.SaveChanges();
+
+                    return Json(new { status = true, message = "Your account has been successfully registered" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { status = false, message = ex.Message });
+            }
         }
     }
 }

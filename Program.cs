@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using simple_seller_app.Contexts;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<DbSellerContext>(option => option.UseSqlServer(builder.Configuration["ConnectionStrings:SqlServer"]!));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

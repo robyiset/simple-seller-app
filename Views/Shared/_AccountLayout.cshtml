@@ -1,0 +1,76 @@
+@{
+    var scheme = Context.Request.Scheme; // "http" or "https" depending on your configuration
+    var host = Context.Request.Host; // The host, including the port if present
+    var appPath = Url.Content("~"); // The application's root path
+    var baseUrl = $"{scheme}://{host}{appPath}";
+    ViewBag.Url = baseUrl;
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - simple_seller_app</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/simple_seller_app.styles.css" asp-append-version="true" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</head>
+<style>
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+    }
+
+    .container-fluid {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+    }
+
+    main {
+        flex-grow: 1;
+        /* Makes the main section take up the remaining space */
+        display: flex;
+        align-items: center;
+        /* Centers content vertically (optional) */
+        justify-content: center;
+        /* Centers content horizontally (optional) */
+    }
+
+    footer {
+        flex-shrink: 0;
+        /* Prevents the footer from being pushed upward */
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background-color: #f8f9fa;
+        /* Optional: Match footer background */
+        border-top: 1px solid #dee2e6;
+        /* Optional: Add border for separation */
+    }
+</style>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Main Content -->
+            <main class="ms-sm-auto">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light border-top">
+        <div class="container text-center">
+            &copy; 2024 - simple_seller_app - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+
+</body>
+
+</html>
