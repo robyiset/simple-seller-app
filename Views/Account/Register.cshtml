@@ -43,7 +43,10 @@
         confirm_password: false,
         full_name: false
     };
+
     $(document).ready(function () {
+
+        // Username Validation
         $('#txt_username').on('input', function () {
             const username = $(this).val();
             validation.username = false;
@@ -53,15 +56,25 @@
                 .removeClass('text-success')
                 .removeClass('text-danger');
 
-            if (username.length < 4) {
-    @* $('#usernameFeedback')
-                    .text('Username must be at least 4 characters long.')
+            const allowedCharacters = @Html.Raw("/^[a-zA-Z0-9-._@+]+$/");
+
+            if (!allowedCharacters.test(username)) {
+                $('#usernameFeedback')
+                    .text('Username contains invalid characters.')
                     .removeClass('text-success')
-                    .addClass('text-danger'); *@
+                    .addClass('text-danger');
                 return;
             }
 
-            // Call the endpoint
+            if (username.length < 4) {
+                $('#usernameFeedback')
+                    .text('Username must be at least 4 characters long.')
+                    .removeClass('text-success')
+                    .addClass('text-danger');
+                return;
+            }
+
+            // Call the endpoint to check if the username is available
             $.ajax({
                 url: '/Account/checkUsername',
                 type: 'GET',
@@ -89,13 +102,39 @@
             });
         });
 
+        // Password Validation
         $('#txt_password').on('input', function () {
             const password = $(this).val();
+            const specialCharPattern = @Html.Raw("/[!@#$%^&*(),.?\":{}|<>_\\-+=]/");
 
             if (password.length < 6) {
                 validation.password = false;
                 $('#passwordFeedback')
                     .text('Password must be at least 6 characters long.')
+                    .removeClass('text-success')
+                    .addClass('text-danger');
+            } else if (!/[A-Z]/.test(password)) {
+                validation.password = false;
+                $('#passwordFeedback')
+                    .text('Password must contain at least one uppercase letter.')
+                    .removeClass('text-success')
+                    .addClass('text-danger');
+            } else if (!/[a-z]/.test(password)) {
+                validation.password = false;
+                $('#passwordFeedback')
+                    .text('Password must contain at least one lowercase letter.')
+                    .removeClass('text-success')
+                    .addClass('text-danger');
+            } else if (!/[0-9]/.test(password)) {
+                validation.password = false;
+                $('#passwordFeedback')
+                    .text('Password must contain at least one digit.')
+                    .removeClass('text-success')
+                    .addClass('text-danger');
+            } else if (!specialCharPattern.test(password)) {
+                validation.password = false;
+                $('#passwordFeedback')
+                    .text('Password must contain at least one special character.')
                     .removeClass('text-success')
                     .addClass('text-danger');
             } else {
@@ -107,6 +146,7 @@
             }
         });
 
+        // Confirm Password Validation
         $('#txt_confirm_password').on('input', function () {
             const password = $('#txt_password').val();
             const confirmPassword = $(this).val();
@@ -126,6 +166,7 @@
             }
         });
 
+        // Full Name Validation
         $('#txt_full_name').on('input', function () {
             const fullName = $(this).val().trim();
             if (fullName === "") {
@@ -143,6 +184,7 @@
             }
         });
 
+        // Register Button Click
         $('#btn_register').on('click', function () {
             if (Object.values(validation).every(status => status === true)) {
                 const data = {
@@ -175,5 +217,4 @@
             }
         });
     });
-
 </script>

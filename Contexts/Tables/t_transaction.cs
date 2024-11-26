@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace simple_seller_app.Contexts.Tables
 {
+    [Table("t_transaction")]
     public class t_transaction
     {
         [Key]

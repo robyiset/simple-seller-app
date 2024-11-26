@@ -1,0 +1,2 @@
+dotnet ef migrations add InitialCreate --context AppIdentityDbContext
+dotnet ef database update --context AppIdentityDbContext
