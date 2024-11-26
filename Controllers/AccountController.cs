@@ -8,23 +8,30 @@ using Microsoft.Extensions.Logging;
 using simple_seller_app.Contexts;
 using simple_seller_app.Contexts.Tables;
 using simple_seller_app.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace simple_seller_app.Controllers
 {
     public class AccountController : Controller
     {
-        private DbSellerContext db;
+        private readonly DbSellerContext db;
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly SignInManager<ApplicationUser> signInManager;
 
-        public AccountController(DbSellerContext _db)
+        public AccountController(DbSellerContext _db, UserManager<ApplicationUser> _userManager, SignInManager<ApplicationUser> _signInManager)
         {
             db = _db;
+            userManager = _userManager;
+            signInManager = _signInManager;
         }
-
+        [AllowAnonymous]
         public IActionResult Index()
         {
             return View();
         }
-
+        [AllowAnonymous]
         public IActionResult Login()
         {
             return View();
@@ -36,16 +43,30 @@ namespace simple_seller_app.Controllers
         }
 
         [HttpPost]
-        public JsonResult LoginUser([FromBody] login req)
+        [AllowAnonymous]
+        public async Task<JsonResult> LoginUser([FromBody] login req)
         {
             try
             {
-                var user = db.u_user.Where(f => f.username == req.username.ToLower()).FirstOrDefault();
+                // login with identity first
+                var user = await userManager.FindByNameAsync(req.username.ToLower());
                 if (user != null)
                 {
-                    if (BCrypt.Net.BCrypt.Verify(req.password, user.password))
+                    // Check if the password matches
+                    var result = await signInManager.PasswordSignInAsync(user, req.password, false, false);
+                    if (result.Succeeded)
                     {
-                        return Json(new { status = true, message = "Welcome, " + req.username.ToLower() });
+                        return Json(new { status = true, message = "[IDENTITY] Welcome, " + req.username.ToLower() });
+                    }
+                }
+
+
+                var db_user = db.u_user.Where(f => f.username == req.username.ToLower()).FirstOrDefault();
+                if (user != null)
+                {
+                    if (BCrypt.Net.BCrypt.Verify(req.password, db_user.password))
+                    {
+                        return Json(new { status = true, message = "[DATABASE] Welcome, " + req.username.ToLower() });
                     }
                 }
                 return Json(new { status = true, message = "Incorrect username or password" });
@@ -57,6 +78,7 @@ namespace simple_seller_app.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public JsonResult checkUsername(string? username)
         {
             try
@@ -77,7 +99,8 @@ namespace simple_seller_app.Controllers
         }
 
         [HttpPost]
-        public JsonResult CreateNewUser([FromBody] register req)
+        [AllowAnonymous]
+        public async Task<JsonResult> CreateNewUser([FromBody] register req)
         {
             try
             {
@@ -99,8 +122,43 @@ namespace simple_seller_app.Controllers
                     });
                     db.SaveChanges();
 
-                    return Json(new { status = true, message = "Your account has been successfully registered" });
+                    //create user identity
+                    role = (await userManager.Users.CountAsync()) == 0 ? "ADMIN" : "KASIR";
+
+                    var user = new ApplicationUser
+                    {
+                        UserName = req.username.ToLower(),
+                        FullName = req.full_name,
+                        Role = role,
+                        RegisterDate = DateTime.UtcNow
+                    };
+
+                    var result = await userManager.CreateAsync(user, req.password);
+
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(user, role);  // Assign role
+
+                        return Json(new { status = true, message = "Your account has been successfully registered" });
+                    }
+
+                    return Json(new { status = false, message = "Failed to create user" });
                 }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { status = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [Authorize] // Only authorized users can log out
+        public async Task<JsonResult> Logout()
+        {
+            try
+            {
+                await signInManager.SignOutAsync();
+                return Json(new { status = true, message = "Logged out." });
             }
             catch (Exception ex)
             {
