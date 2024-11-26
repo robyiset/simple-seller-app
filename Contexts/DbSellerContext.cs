@@ -8,22 +8,9 @@ namespace simple_seller_app.Contexts
     {
         public DbSellerContext() { }
         public DbSellerContext(DbContextOptions<DbSellerContext> options) : base(options) { }
-        //protected readonly IConfiguration configuration;
-
-        // public DbSellerContext(IConfiguration _configuration)
-        // {
-        //     configuration = _configuration;
-        // }
-
-        // protected override void OnConfiguring(DbContextOptionsBuilder options)
-        // {
-        //     string connectionString = configuration["ConnectionStrings:SqlServer"]!;
-        //     options.UseSqlServer(connectionString);
-        // }
 
         public DbSet<m_product> m_product { get; set; }
         public DbSet<t_transaction> t_transaction { get; set; }
-        public DbSet<u_user> u_user { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

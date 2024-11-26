@@ -46,7 +46,6 @@
 
     $(document).ready(function () {
 
-        // Username Validation
         $('#txt_username').on('input', function () {
             const username = $(this).val();
             validation.username = false;
@@ -74,7 +73,6 @@
                 return;
             }
 
-            // Call the endpoint to check if the username is available
             $.ajax({
                 url: '/Account/checkUsername',
                 type: 'GET',
@@ -102,7 +100,6 @@
             });
         });
 
-        // Password Validation
         $('#txt_password').on('input', function () {
             const password = $(this).val();
             const specialCharPattern = @Html.Raw("/[!@#$%^&*(),.?\":{}|<>_\\-+=]/");
@@ -146,7 +143,6 @@
             }
         });
 
-        // Confirm Password Validation
         $('#txt_confirm_password').on('input', function () {
             const password = $('#txt_password').val();
             const confirmPassword = $(this).val();
@@ -166,7 +162,6 @@
             }
         });
 
-        // Full Name Validation
         $('#txt_full_name').on('input', function () {
             const fullName = $(this).val().trim();
             if (fullName === "") {
@@ -184,7 +179,6 @@
             }
         });
 
-        // Register Button Click
         $('#btn_register').on('click', function () {
             if (Object.values(validation).every(status => status === true)) {
                 const data = {
@@ -202,8 +196,8 @@
                         if (response.status) {
                             showToast(response.message, 'success');
                             setTimeout(() => {
-                                window.location.href = '@Url.Action("Login", "Account")'; // Redirect to login
-                            }, 2000);
+                                window.location.href = '@Url.Action("Login", "Account")';
+                            }, 500);
                         } else {
                             showToast(response.message, 'danger');
                         }

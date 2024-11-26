@@ -1,12 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using simple_seller_app.Contexts;
-using simple_seller_app.Contexts.Tables;
 using simple_seller_app.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,13 +11,13 @@ namespace simple_seller_app.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly DbSellerContext db;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AccountController(DbSellerContext _db, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, RoleManager<IdentityRole> roleManager)
         {
-            db = _db;
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
         }
         [AllowAnonymous]
         public IActionResult Index()
@@ -71,23 +64,19 @@ namespace simple_seller_app.Controllers
         {
             try
             {
-                // Use UserManager to check if the username already exists
                 var user = await _userManager.FindByNameAsync(username);
 
                 if (user != null)
                 {
-                    // Username already exists
                     return Json(new { status = false, message = "Username is already used" });
                 }
                 else
                 {
-                    // Username is available
                     return Json(new { status = true, message = "Username is available" });
                 }
             }
             catch (Exception ex)
             {
-                // Catch any exception and return the message
                 return Json(new { status = false, message = ex.Message });
             }
         }
@@ -98,13 +87,11 @@ namespace simple_seller_app.Controllers
         {
             try
             {
-                // Check if username already exists
                 if (await _userManager.FindByNameAsync(req.username.ToLower()) != null)
                 {
                     return new JsonResult(new { status = false, message = "Username is already used" });
                 }
 
-                // Create a new user
                 var user = new IdentityUser
                 {
                     UserName = req.username.ToLower(),
@@ -113,14 +100,19 @@ namespace simple_seller_app.Controllers
                 var result = await _userManager.CreateAsync(user, req.password);
                 if (result.Succeeded)
                 {
-                    // Assign default role
                     string role = await _userManager.Users.CountAsync() <= 1 ? "ADMIN" : "KASIR";
+
+                    var roleExist = await _roleManager.RoleExistsAsync(role);
+                    if (!roleExist)
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(role));
+                    }
+
                     await _userManager.AddToRoleAsync(user, role);
 
                     return new JsonResult(new { status = true, message = "Your account has been created successfully." });
                 }
 
-                // Handle errors
                 string errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 return new JsonResult(new { status = false, message = $"An error occurred: {errors}" });
             }
@@ -130,13 +122,16 @@ namespace simple_seller_app.Controllers
             }
         }
 
-
-        [HttpPost]
-        [Authorize] // Only authorized users can log out
+        [HttpGet]
+        [Authorize]
         public async Task<JsonResult> Logout()
         {
             try
             {
+                await _signInManager.SignOutAsync();
+
+                HttpContext.Session.Clear();
+
                 return Json(new { status = true, message = "Logged out." });
             }
             catch (Exception ex)
@@ -144,5 +139,6 @@ namespace simple_seller_app.Controllers
                 return Json(new { status = false, message = ex.Message });
             }
         }
+
     }
 }

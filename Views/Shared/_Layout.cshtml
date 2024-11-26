@@ -64,6 +64,9 @@
                     <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="https://github.com/mdo.png" alt="mdo" width="32" height="32" class="rounded-circle">
+                        <span class="ms-2"> <!-- ms-2 adds left margin to the username -->
+                            @User.Identity.Name <!-- Assuming the username is stored in the Identity.Name -->
+                        </span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownUser1">
                         @* <li><a class="dropdown-item" href="#">New project...</a></li>
@@ -72,7 +75,7 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="#">Sign out</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="logout()">Sign out</a></li>
                     </ul>
                 </div>
             </div>
@@ -85,8 +88,12 @@
             <nav class="d-flex flex-column flex-shrink-0 p-3 col-md-3 col-lg-2 bg-light">
                 <div>
                     <ul class="nav nav-pills flex-column mb-auto">
-                        <li class="nav-item"><a class="nav-link" href="@Url.Action("Index", "MasterProduct")">Master
-                                Product</a></li>
+                        @if (User.IsInRole("ADMIN"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Index", "MasterProduct")">Master Product</a>
+                            </li>
+                        }
                         <li class="nav-item"><a class="nav-link"
                                 href="@Url.Action("Index", "Transaction")">Transactions</a></li>
                         <li class="nav-item"><a class="nav-link" href="@Url.Action("Index", "Report")">Reports</a></li>
@@ -95,8 +102,9 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+            <main class="col-lg-10 pt-4">
+                <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer" style="z-index: 9999;">
+                </div>
                 @RenderBody()
             </main>
         </div>
@@ -126,9 +134,29 @@
             const bootstrapToast = new bootstrap.Toast(toast[0]);
             bootstrapToast.show();
 
-            // Automatically remove toast after hiding
             toast.on('hidden.bs.toast', function () {
                 $(this).remove();
+            });
+        }
+
+        function logout() {
+            $.ajax({
+                url: '@Url.Action("Logout", "Account")',
+                type: 'GET',
+                contentType: 'application/json',
+                success: function (response) {
+                    if (response.status) {
+                        showToast(response.message, 'success');
+                        setTimeout(function () {
+                            window.location.href = '@Url.Action("Login", "Account")';
+                        }, 500);
+                    } else {
+                        showToast(response.message, 'danger');
+                    }
+                },
+                error: function (xhr) {
+                    showToast(xhr.responseText || 'An error occurred while log out.', 'danger');
+                }
             });
         }
     </script>
