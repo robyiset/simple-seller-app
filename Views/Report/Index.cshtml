@@ -1,4 +1,171 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Report";
 }
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.0/css/buttons.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf-8"
+    src="https://cdn.datatables.net/buttons/2.2.0/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf-8"
+    src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" charset="utf-8"
+    src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script type="text/javascript" charset="utf-8"
+    src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script type="text/javascript" charset="utf-8"
+    src="https://cdn.datatables.net/buttons/2.2.0/js/buttons.html5.min.js"></script>
+
+
+<style>
+    .text-right {
+        text-align: right;
+    }
+
+    .ui-datepicker-calendar {
+        display: none;
+    }
+
+    #reportTable {
+        border-top: 1px solid #aaa;
+    }
+
+    #reportTable thead {
+        border-top: 1px solid #aaa;
+    }
+</style>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Report Monthly</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-3">
+                        <label for="monthPicker">Select Month:</label>
+                        <input type="text" id="monthPicker" class="form-control" placeholder="yyyy-MM" />
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <table id="reportTable" class="display">
+                            <thead>
+                                <tr>
+                                    <th>Transaction Code</th>
+                                    <th>Product Code</th>
+                                    <th>Product Name</th>
+                                    <th>Price</th>
+                                    <th>Amounts</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be populated dynamically here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        var myDate = $("#monthPicker").attr('data-date');
+        $('#monthPicker').datepicker({
+            yearRange: "-20:+0",
+            changeMonth: true,
+            changeYear: true,
+            setDate: myDate,
+            showButtonPanel: false,
+            dateFormat: 'yy-mm',
+            onClose: function (dateText, inst) {
+                var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
+                var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
+                $(this).datepicker('setDate', new Date(year, month, 1));
+                getReport();
+            }
+        });
+        $('#monthPicker').datepicker('setDate', myDate);
+
+        getReport();
+
+
+    });
+
+    function getReport() {
+        if ($.fn.DataTable.isDataTable("#reportTable")) {
+            $("#reportTable").DataTable().destroy();
+        }
+        $("#reportTable").DataTable({
+            paging: false,
+            searching: false,
+            info: false,
+            ordering: false,
+            ajax: {
+                url: "/Report/getReport?month=" + $("#monthPicker").val(),
+                dataSrc: "data",
+                complete: function (response) {
+                    var result = response.responseJSON;
+                    if (!result.status) {
+                        showToast(result.message, 'danger');
+                    }
+                },
+            },
+            columns: [
+                { data: "transaction_code" },
+                { data: "product_code" },
+                { data: "product_name" },
+                {
+                    data: "price", render: function (data) {
+                        if (data == null || data === "") {
+                            return "";
+                        }
+                        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data);
+                    },
+                    className: "text-right"
+                },
+                { data: "quantity", className: "text-right" },
+                {
+                    data: "total", render: function (data) {
+                        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data);
+                    },
+                    className: "text-right"
+                },
+            ],
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    text: 'Export to Excel',
+                    filename: 'report_' + new Date().toISOString(),
+                    className: 'btn btn-success'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: 'Export to PDF',
+                    filename: 'report_' + new Date().toISOString(),
+                    orientation: 'portrait',
+                    pageSize: 'A4',
+                    className: 'btn btn-danger'
+                }
+            ],
+            drawCallback: function () {
+                var table = $("#reportTable").DataTable();
+                if (table.rows().count() === 0) {
+                    $('.buttons-excel, .buttons-pdf').hide();
+                } else {
+                    $('.buttons-excel, .buttons-pdf').show();
+                }
+            }
+        });
+
+    }
+
+</script>

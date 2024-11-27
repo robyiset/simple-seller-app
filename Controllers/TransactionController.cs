@@ -1,6 +1,7 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using simple_seller_app.Contexts;
 using simple_seller_app.Contexts.Tables;
 using simple_seller_app.Models;
@@ -23,6 +24,30 @@ namespace simple_seller_app.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> getData()
+        {
+            try
+            {
+                var data = await db.m_product
+                                .Where(p => p.deleted_date == null)
+                                .Select(p => new
+                                {
+                                    p.id,
+                                    p.product_code,
+                                    p.product_name,
+                                    p.price
+                                })
+                                .ToListAsync();
+
+                return Json(new { status = true, data });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { status = false, message = ex.Message, data = new List<m_product>() });
+            }
         }
 
         [HttpPost]
@@ -59,6 +84,7 @@ namespace simple_seller_app.Controllers
         {
             try
             {
+                var sss = await calculatorService.Add(req.a, req.b);
                 return Json(new { status = true, data = await calculatorService.Add(req.a, req.b) });
             }
             catch (Exception ex)

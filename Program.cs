@@ -38,6 +38,13 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/Login";
 });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("NotKasir", policy =>
+        policy.RequireAssertion(context =>
+            !context.User.IsInRole("KASIR")
+        ));
+});
 
 builder.Services.AddTransient<CalculatorService>();
 

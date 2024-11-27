@@ -28,7 +28,7 @@ namespace simple_seller_app.Controllers
         {
             try
             {
-                var products = await db.m_product
+                var data = await db.m_product
                                 .Where(p => p.deleted_date == null)
                                 .Select(p => new
                                 {
@@ -39,11 +39,11 @@ namespace simple_seller_app.Controllers
                                 })
                                 .ToListAsync();
 
-                return Json(products);
+                return Json(new { status = true, data });
             }
             catch (Exception ex)
             {
-                return Json(new { status = false, message = ex.Message });
+                return Json(new { status = false, message = ex.Message, data = new List<m_product>() });
             }
         }
 
@@ -61,7 +61,7 @@ namespace simple_seller_app.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { status = false, message = ex.Message });
+                return Json(new { status = false, message = ex.Message, data = new m_product() });
             }
         }
 

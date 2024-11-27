@@ -45,6 +45,12 @@
         background-color: #f8f9fa;
         border-top: 1px solid #dee2e6;
     }
+
+    .container-fluid-fullheight {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
 </style>
 
 <body>
@@ -105,14 +111,17 @@
             <main class="col-lg-10 pt-4">
                 <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer" style="z-index: 9999;">
                 </div>
-                @RenderBody()
+                <div class="container-fluid container-fluid-fullheight">
+                    @RenderBody()
+                </div>
+
             </main>
         </div>
     </div>
 
     <footer class="footer mt-auto py-3 bg-light border-top">
         <div class="container text-center">
-            &copy; 2024 - simple_seller_app - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2024 - simple_seller_app
         </div>
     </footer>
 

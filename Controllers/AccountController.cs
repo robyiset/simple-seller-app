@@ -27,9 +27,14 @@ namespace simple_seller_app.Controllers
         [AllowAnonymous]
         public IActionResult Login()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
             return View();
         }
-
+        [AllowAnonymous]
+        [Authorize(Policy = "NotKasir")]
         public IActionResult Register()
         {
             return View();
