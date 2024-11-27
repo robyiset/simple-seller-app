@@ -19,9 +19,9 @@ Database pada aplikasi ini dibackup dengan format script file `db_Seller.sql` di
 
 1. Install .NET 8 (jika belum terinstal di sistem) dari official website: [.NET 8 Downloads](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 
-2. Navigate ke directori:
+2. Navigate ke directori aplikasi:
 ```bash
-cd ...\simple-seller-app\
+cd simple-seller-app
 ```
 
 3. Restore .NET Core package:
