@@ -89,7 +89,7 @@ namespace simple_seller_app.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { status = false, message = ex.Message });
+                return Json(new { status = false, message = ex.Message, data = string.Empty });
             }
         }
         [HttpPost]
@@ -101,7 +101,7 @@ namespace simple_seller_app.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { status = false, message = ex.Message });
+                return Json(new { status = false, message = ex.Message, data = string.Empty });
             }
         }
         [HttpPost]
@@ -113,7 +113,7 @@ namespace simple_seller_app.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { status = false, message = ex.Message });
+                return Json(new { status = false, message = ex.Message, data = string.Empty });
             }
         }
         [HttpPost]
@@ -125,7 +125,7 @@ namespace simple_seller_app.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { status = false, message = ex.Message });
+                return Json(new { status = false, message = ex.Message, data = string.Empty });
             }
         }
 

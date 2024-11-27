@@ -1,5 +1,6 @@
 
 using System.Text;
+using System.Xml.Linq;
 
 namespace simple_seller_app.Services
 {
@@ -10,44 +11,28 @@ namespace simple_seller_app.Services
         {
             using (var client = new HttpClient())
             {
-                // Build SOAP request body for SOAP 1.1
-                var soapEnvelope = $@"
-        <?xml version='1.0' encoding='utf-8'?>
-        <soap:Envelope xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
-                       xmlns:xsd='http://www.w3.org/2001/XMLSchema'
-                       xmlns:soap='http://schemas.xmlsoap.org/soap/envelope/'>
-            <soap:Body>
-                <{operation} xmlns='http://tempuri.org/'>
-                    <intA>{param1}</intA>
-                    <intB>{param2}</intB>
-                </{operation}>
-            </soap:Body>
-        </soap:Envelope>";
+                var soapEnvelope = $"<?xml version='1.0' encoding='utf-8'?><soap:Envelope xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:soap='http://schemas.xmlsoap.org/soap/envelope/'><soap:Body><{operation} xmlns='http://tempuri.org/'><intA>{param1}</intA><intB>{param2}</intB></{operation}></soap:Body></soap:Envelope>";
 
-                // Create HTTP content with the SOAP envelope
-                var content = new StringContent(soapEnvelope, Encoding.UTF8, "text/xml");
-
-                // Clear any previous headers
                 client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Add("SOAPAction", "\"http://tempuri.org/" + operation + "\"");
+                client.DefaultRequestHeaders.Connection.Add("keep-alive");
 
-                // Set SOAPAction header (for SOAP 1.1)
-                client.DefaultRequestHeaders.Add("SOAPAction", "http://tempuri.org/" + operation);
-
-                // Send the POST request to the web service
-                var response = await client.PostAsync("http://www.dneonline.com/calculator.asmx", content);
-
-                // Log the status code and reason phrase for debugging
-                Console.WriteLine($"Status Code: {response.StatusCode}");
-                Console.WriteLine($"Reason Phrase: {response.ReasonPhrase}");
-
-                // Read the response content
+                var response = await client.PostAsync("http://www.dneonline.com/calculator.asmx", new StringContent(soapEnvelope, Encoding.UTF8, "text/xml"));
                 var responseString = await response.Content.ReadAsStringAsync();
+                var doc = XDocument.Parse(responseString);
+                var result = doc.Descendants(XName.Get($"{operation}Result", "http://tempuri.org/"))
+                                        .FirstOrDefault()?.Value;
 
-                // Log the response for debugging
-                Console.WriteLine("Response: " + responseString);
+                if (int.TryParse(result, out _))
+                {
+                    return result;
+                }
+                else
+                {
+                    return "An error occured";
+                }
 
-                // Return the response
-                return responseString;
+
             }
         }
 
