@@ -36,20 +36,20 @@ dotnet restore
   },
 ```
 
-5. build Identity dahulu, agar sistem Identity terpasang di sistem aplikasi:
+5. build Identity dahulu, agar sistem Identity terpasang di sistem aplikasi dengan command line berikut:
 
 ```bash
 dotnet ef migrations add InitialCreate --context AppIdentityDbContext
 dotnet ef database update --context AppIdentityDbContext
 ```
 
-5. build aplikasi:
+5. build aplikasi dengan command line berikut:
 
 ```bash
 dotnet build
 ```
 
-6. Jalankan aplikasi:
+6. Jalankan aplikasi dengan command line berikut:
 
 ```bash
 dotnet run
